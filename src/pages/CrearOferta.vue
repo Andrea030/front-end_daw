@@ -3,11 +3,20 @@
     <div class="row justify-center q-mb-md">
       <div class="col-12 col-md-8 col-lg-6">
         <q-breadcrumbs active-color="dark" class="text-grey-7 q-mb-lg">
-          <q-breadcrumbs-el label="Volver" icon="arrow_back" class="cursor-pointer" />
-          <q-breadcrumbs-el label="Inicio" />
-          <q-breadcrumbs-el label="Explorar" />
-          <q-breadcrumbs-el label="Ofertas" />
-          <q-breadcrumbs-el label="Publica Oferta" class="text-weight-bold" />
+          <q-breadcrumbs-el
+            label="Volver"
+            icon="arrow_back"
+            class="cursor-pointer"
+            @click="volverAtras"
+          />
+
+          <q-breadcrumbs-el
+            v-for="(ruta, index) in breadcrumbStore.historialRutas"
+            :key="index"
+            :label="ruta.label"
+            :to="ruta.to"
+            :class="{ 'text-weight-bold': index === breadcrumbStore.historialRutas.length - 1 }"
+          />
         </q-breadcrumbs>
       </div>
     </div>
@@ -18,24 +27,6 @@
           <q-card-section>
             <div class="text-h6 text-weight-bold text-dark q-mb-sm">Detalles de la Oferta</div>
             <q-separator class="q-mb-lg" />
-
-            <div class="text-subtitle2 text-grey-8 q-mb-sm">Tipo de Transacción</div>
-            <q-btn-toggle
-              v-model="formulario.tipoTransaccion"
-              spread
-              no-caps
-              rounded
-              unelevated
-              toggle-color="primary"
-              color="grey-2"
-              text-color="grey-8"
-              :options="[
-                { label: 'Compra', value: 'compra' },
-                { label: 'Venta', value: 'venta' },
-              ]"
-              class="q-mb-lg"
-            />
-
             <div class="row q-col-gutter-md q-mb-md">
               <div class="col-12 col-sm-6">
                 <div class="text-subtitle2 text-grey-8 q-mb-sm">Tengo</div>
@@ -73,7 +64,14 @@
                 />
               </div>
               <div class="col-12 col-sm-6">
-                <div class="text-subtitle2 text-grey-8 q-mb-sm">Tasa de cambio</div>
+                <div class="row justify-between items-center q-mb-sm">
+                  <div class="text-subtitle2 text-grey-8">Tasa de cambio</div>
+
+                  <div class="text-caption text-weight-bold" style="color: #a87b5d">
+                    Obtendrás: {{ cantidadARecibir }} {{ formulario.monedaQuiero.value }}
+                  </div>
+                </div>
+
                 <q-input
                   outlined
                   v-model.number="formulario.tasaCambio"
@@ -107,7 +105,23 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { reactive, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { useQuasar } from 'quasar' // Importamos notificaciones
+import { api } from 'src/boot/axios'
+import { useBreadcrumbStore } from 'stores/breadcrumbStore'
+
+const router = useRouter()
+const $q = useQuasar()
+
+// Inicializamos el store
+const breadcrumbStore = useBreadcrumbStore()
+
+const volverAtras = () => {
+  router.back()
+}
+
+const MAX_DIGITOS = 999999999
 
 // Opciones de moneda estructuradas para que el sufijo de los inputs sea dinámico
 const opcionesMonedas = [
@@ -125,16 +139,112 @@ const formulario = reactive({
   tasaCambio: 1.17,
 })
 
-// Función temporal para probar en consola antes de conectar Axios
-const prepararPublicacion = () => {
-  const payload = {
-    tipoTransaccion: formulario.tipoTransaccion,
-    monedaAEnviar: formulario.monedaTengo.value,
-    monedaARecibir: formulario.monedaQuiero.value,
-    tipoCambio: formulario.tasaCambio,
-    cantidad: formulario.cantidad,
-  }
+const cantidadARecibir = computed(() => {
+  // Multiplicamos la cantidad por la tasa
+  const resultado = formulario.cantidad * formulario.tasaCambio
 
-  console.log('JSON listo para enviar a tu DTO en .NET:', payload)
+  // Si el resultado no es un número válido (ej. si el usuario borra todo), devolvemos 0.00
+  if (isNaN(resultado) || resultado === 0) return '0.00'
+
+  // Formateamos para que siempre muestre 2 decimales
+  return resultado.toFixed(2)
+})
+
+watch(
+  () => formulario.monedaTengo,
+  (nuevaMoneda, viejaMoneda) => {
+    // Si la nueva moneda que seleccioné es igual a la que ya estaba en "Quiero"
+    if (nuevaMoneda.value === formulario.monedaQuiero.value) {
+      // Pasamos la moneda que teníamos antes al campo "Quiero"
+      formulario.monedaQuiero = viejaMoneda
+    }
+  },
+)
+
+watch(
+  () => formulario.monedaQuiero,
+  (nuevaMoneda, viejaMoneda) => {
+    // Si la nueva moneda que seleccioné es igual a la que ya estaba en "Tengo"
+    if (nuevaMoneda.value === formulario.monedaTengo.value) {
+      // Pasamos la moneda que teníamos antes al campo "Tengo"
+      formulario.monedaTengo = viejaMoneda
+    }
+  },
+)
+
+watch(
+  () => formulario.cantidad,
+  (nuevaCantidad) => {
+    if (!nuevaCantidad) return // Si el usuario borra todo, no hacemos nada
+
+    // A. Capear si la cantidad por sí sola supera los 9 dígitos
+    if (nuevaCantidad > MAX_DIGITOS) {
+      formulario.cantidad = MAX_DIGITOS
+    }
+
+    // B. Capear si el producto (Obtendrás) supera el límite
+    if (formulario.cantidad * formulario.tasaCambio > MAX_DIGITOS) {
+      formulario.cantidad = parseFloat((MAX_DIGITOS / formulario.tasaCambio).toFixed(2))
+    }
+  },
+)
+
+watch(
+  () => formulario.tasaCambio,
+  (nuevaTasa) => {
+    if (!nuevaTasa) return
+
+    // A. Capear si la tasa por sí sola supera los 9 dígitos
+    if (nuevaTasa > MAX_DIGITOS) {
+      formulario.tasaCambio = MAX_DIGITOS
+    }
+
+    // B. Capear si el producto (Obtendrás) supera el límite
+    if (formulario.cantidad * formulario.tasaCambio > MAX_DIGITOS) {
+      formulario.tasaCambio = parseFloat((MAX_DIGITOS / formulario.cantidad).toFixed(4))
+    }
+  },
+)
+
+// Función temporal para probar en consola antes de conectar Axios
+const prepararPublicacion = async () => {
+  try {
+    // 1. Mostrar estado de carga (opcional pero buena UX)
+    $q.loading.show({ message: 'Publicando oferta...' })
+
+    // 2. Armar el DTO exactamente como lo espera tu backend en .NET
+    const payload = {
+      monedaAEnviar: formulario.monedaTengo.value,
+      monedaARecibir: formulario.monedaQuiero.value,
+      tipoCambio: formulario.tasaCambio,
+      cantidad: formulario.cantidad,
+      // Nota: No enviamos clienteId, porque el backend lo saca del Token
+    }
+
+    // 3. Hacer la petición POST al endpoint (revisa que la ruta coincida con tu controller)
+    const response = await api.post('/ofertas', payload)
+
+    response.data // Aquí podrías hacer algo con la respuesta si quieres
+    // 4. Éxito
+    $q.notify({
+      type: 'positive',
+      message: 'Oferta publicada con éxito',
+      position: 'top',
+    })
+
+    // Redirigir al usuario al mercado o inicio
+    router.push('/ofertas')
+  } catch (error) {
+    // 5. Manejo de errores
+    console.error(error)
+    $q.notify({
+      type: 'negative',
+      message: error.response?.data?.mensaje || 'Error al conectar con el servidor',
+      position: 'top',
+    })
+  } finally {
+    // 6. Ocultar el loading
+    $q.loading.hide()
+  }
 }
 </script>
