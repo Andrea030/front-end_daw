@@ -245,7 +245,7 @@ const prepararPublicacion = async () => {
       position: 'top',
     })
 
-    router.push('/ofertas')
+    router.push('/home')
   } catch (error) {
     console.error(error)
     $q.notify({

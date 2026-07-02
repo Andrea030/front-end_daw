@@ -2,7 +2,7 @@ import { boot } from 'quasar/wrappers'
 import axios from 'axios'
 
 // Cambia el puerto por el que te asigne Visual Studio/.NET al correr la API
-const api = axios.create({ baseURL: 'https://localhost:7xxx/api' })
+const api = axios.create({ baseURL: 'http://localhost:5000/api' })
 
 export default boot(({ app }) => {
   app.config.globalProperties.$axios = axios
