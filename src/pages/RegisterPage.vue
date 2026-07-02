@@ -136,7 +136,7 @@ const crearCuenta = async () => {
       position: 'top'
     })
     
-    router.push('/')
+    router.push('/home')
 
   } catch (error) {
     console.error('Error al registrar usuario:', error)
