@@ -148,12 +148,12 @@
 
                   <div class="offer-label">TASA DE CAMBIO</div>
                   <div class="offer-rate text-weight-bold">
-                    {{ offer.tipoCambio }} {{ offer.monedaARecibir }} / {{ offer.monedaAEnviar }}
+                    {{ offer.tipoCambio }} {{ offer.monedaAEnviar }} / {{ offer.monedaARecibir }}
                   </div>
 
                   <div class="offer-label">MONTO</div>
                   <div class="offer-amount text-weight-bold text-grey-9">
-                    Valor de cambio directo
+                    {{ offer.cantidad }}
                   </div>
 
                   <div class="offer-label">CALIFICACIÓN VENDEDOR</div>
@@ -298,7 +298,7 @@ const filteredOffers = computed(() => {
   } else if (filterRating.value === 'worst') {
     result.sort((a, b) => Number(a.calificacionUsuario) - Number(b.calificacionUsuario))
   }
-  console.log('Query:', searchQuery) // Debugging line to check filtered results
+  console.log('Query:', searchQuery.value) // Debugging line to check filtered results
 
   return result
 })
