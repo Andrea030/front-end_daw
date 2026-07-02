@@ -143,12 +143,12 @@
               <q-card flat bordered class="offer-card column justify-between full-height">
                 <q-card-section class="q-pa-md column q-gutter-y-xs">
                   <div class="text-subtitle1 text-weight-bold text-grey-9">
-                    Oferta por: {{ offer.ClienteNombre }}
+                    Oferta por: {{ offer.nombreUsuario }}
                   </div>
 
                   <div class="offer-label">TASA DE CAMBIO</div>
                   <div class="offer-rate text-weight-bold">
-                    {{ offer.TipoCambio }} {{ offer.MonedaARecibir }} / {{ offer.MonedaAEnviar }}
+                    {{ offer.tipoCambio }} {{ offer.monedaARecibir }} / {{ offer.monedaAEnviar }}
                   </div>
 
                   <div class="offer-label">MONTO</div>
@@ -160,13 +160,13 @@
                   <div class="row items-center q-gutter-x-xs">
                     <q-icon name="star" color="warning" size="sm" />
                     <span class="text-subtitle2 text-weight-bold text-grey-9">
-                      {{ offer.CalificacionVendedor }}
+                      {{ offer.calificacionUsuario }}
                     </span>
                   </div>
                 </q-card-section>
 
                 <div class="offer-timestamp text-grey-6 text-uppercase">
-                  Estado: {{ offer.Estado ? 'Activo' : 'Inactivo' }}
+                  Estado: {{ offer.estado ? 'Activo' : 'Inactivo' }}
                 </div>
 
                 <q-btn
@@ -197,7 +197,6 @@ const baseUrl = 'http://localhost:5000'
 
 const loading = ref(false)
 const rawOffers = ref([])
-const clientsMap = ref({})
 
 // --- VARIABLES DE MODELO DE FILTROS ---
 const searchQuery = ref('')
@@ -248,33 +247,13 @@ const handleExchange = (offerId) => {
 const fetchInitialData = async () => {
   loading.value = true
   try {
-    // 1. Obtener los clientes (/api/clientes)
-    const clientsResponse = await axios.get(`${baseUrl}/api/clientes`)
-    const clientsList = clientsResponse.data || []
-
-    // Mapeamos usando Camel Case exacto entregado por tu API (calificacionVendedor)
-    clientsMap.value = clientsList.reduce((acc, client) => {
-      acc[client.id] = {
-        nombre: client.nombre,
-        calificacion:
-          client.calificacionVendedor !== undefined
-            ? Number(client.calificacionVendedor).toFixed(2)
-            : '0.00',
-      }
-      return acc
-    }, {})
-
-    // 2. Obtener las ofertas (/api/ofertas)
+    // Ya no necesitas consultar /api/clientes, el DTO de ofertas ya trae esos datos
     const offersResponse = await axios.get(`${baseUrl}/api/ofertas`)
-
-    // Mapeo sincronizado con Camel Case exacto (clienteId)
-    rawOffers.value = (offersResponse.data || []).map((offer) => ({
-      ...offer,
-      ClienteNombre: clientsMap.value[offer.clienteId]?.nombre || 'Usuario Registrado',
-      CalificacionVendedor: clientsMap.value[offer.clienteId]?.calificacion || '0.00',
-    }))
+    
+    // Guardamos la respuesta tal cual viene de Postman
+    rawOffers.value = offersResponse.data || []
   } catch (error) {
-    console.error('Error cargando los datos de la base de datos:', error)
+    console.error('Error cargando las ofertas:', error)
   } finally {
     loading.value = false
   }
@@ -282,48 +261,44 @@ const fetchInitialData = async () => {
 
 // --- LÓGICA DE FILTRADO Y ORDENAMIENTO EN VUE ---
 const filteredOffers = computed(() => {
-  // CORRECCIÓN: Filtramos usando evaluación booleana estricta (true) enviada por tu backend
-  let result = rawOffers.value.filter((o) => o.Estado === true)
+  // Evaluamos usando la propiedad real 'estado' en minúscula
+  let result = rawOffers.value.filter((o) => o.estado === true)
 
-  // Filtro por moneda a enviar
   if (filterSend.value) {
-    result = result.filter((o) => o.MonedaAEnviar === filterSend.value)
+    result = result.filter((o) => o.monedaAEnviar === filterSend.value)
   }
 
-  // Filtro por moneda a recibir
   if (filterReceive.value) {
-    result = result.filter((o) => o.MonedaARecibir === filterReceive.value)
+    result = result.filter((o) => o.monedaARecibir === filterReceive.value)
   }
 
-  // CORRECCIÓN: Filtro limpio evaluando exclusivamente la propiedad real de tu objeto (TipoCambio)
   if (maxRate.value) {
-    result = result.filter((o) => Number(o.TipoCambio) <= Number(maxRate.value))
+    result = result.filter((o) => Number(o.tipoCambio) <= Number(maxRate.value))
   }
 
-  // Filtro por barra de búsqueda (por nombre de usuario o monedas)
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     result = result.filter(
       (o) =>
-        o.ClienteNombre.toLowerCase().includes(query) ||
-        o.MonedaAEnviar.toLowerCase().includes(query) ||
-        o.MonedaARecibir.toLowerCase().includes(query),
+        (o.nombreUsuario && o.nombreUsuario.toLowerCase().includes(query)) ||
+        (o.monedaAEnviar && o.monedaAEnviar.toLowerCase().includes(query)) ||
+        (o.monedaARecibir && o.monedaARecibir.toLowerCase().includes(query))
     )
   }
 
-  // Ordenamiento por Tasa de Cambio
   if (sortBy.value === 'rate_asc') {
-    result.sort((a, b) => a.TipoCambio - b.TipoCambio)
+    result.sort((a, b) => a.tipoCambio - b.tipoCambio)
   } else if (sortBy.value === 'rate_desc') {
-    result.sort((a, b) => b.TipoCambio - a.TipoCambio)
+    result.sort((a, b) => b.tipoCambio - a.tipoCambio)
   }
 
-  // Ordenamiento basado en los botones Radio nativos (Calificación)
+  // Ordenamiento basado en las llaves correctas de calificación
   if (filterRating.value === 'best') {
-    result.sort((a, b) => Number(b.CalificacionVendedor) - Number(a.CalificacionVendedor))
+    result.sort((a, b) => Number(b.calificacionUsuario) - Number(a.calificacionUsuario))
   } else if (filterRating.value === 'worst') {
-    result.sort((a, b) => Number(a.CalificacionVendedor) - Number(b.CalificacionVendedor))
+    result.sort((a, b) => Number(a.calificacionUsuario) - Number(b.calificacionUsuario))
   }
+  console.log('Query:', searchQuery) // Debugging line to check filtered results
 
   return result
 })
