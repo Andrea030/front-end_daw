@@ -59,6 +59,7 @@
                   outlined
                   v-model.number="formulario.cantidad"
                   type="number"
+                  min="0"
                   dense
                   :suffix="formulario.monedaTengo.value"
                 />
@@ -76,6 +77,7 @@
                   outlined
                   v-model.number="formulario.tasaCambio"
                   type="number"
+                  min="0"
                   dense
                   :suffix="`${formulario.monedaQuiero.value}/${formulario.monedaTengo.value}`"
                   bottom-slots
@@ -107,14 +109,13 @@
 <script setup>
 import { reactive, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useQuasar } from 'quasar' // Importamos notificaciones
+import { useQuasar } from 'quasar'
 import { api } from 'src/boot/axios'
 import { useBreadcrumbStore } from 'stores/breadcrumbStore'
 
 const router = useRouter()
 const $q = useQuasar()
 
-// Inicializamos el store
 const breadcrumbStore = useBreadcrumbStore()
 
 const volverAtras = () => {
@@ -123,14 +124,12 @@ const volverAtras = () => {
 
 const MAX_DIGITOS = 999999999
 
-// Opciones de moneda estructuradas para que el sufijo de los inputs sea dinámico
 const opcionesMonedas = [
   { label: 'USD - Dólares', value: 'USD' },
   { label: 'EUR - Euro', value: 'EUR' },
   { label: 'PEN - Soles', value: 'PEN' },
 ]
 
-// Estado reactivo del formulario
 const formulario = reactive({
   tipoTransaccion: 'compra',
   monedaTengo: opcionesMonedas[0],
@@ -140,7 +139,6 @@ const formulario = reactive({
 })
 
 const cantidadARecibir = computed(() => {
-  // Multiplicamos la cantidad por la tasa
   const resultado = formulario.cantidad * formulario.tasaCambio
 
   // Si el resultado no es un número válido (ej. si el usuario borra todo), devolvemos 0.00
@@ -175,14 +173,24 @@ watch(
 watch(
   () => formulario.cantidad,
   (nuevaCantidad) => {
-    if (!nuevaCantidad) return // Si el usuario borra todo, no hacemos nada
+    if (!nuevaCantidad) return
 
-    // A. Capear si la cantidad por sí sola supera los 9 dígitos
+    if (nuevaCantidad < 0) {
+      formulario.cantidad = 0
+      return
+    }
+
+    const cantidadFormateada = parseFloat(nuevaCantidad.toFixed(2))
+    if (nuevaCantidad !== cantidadFormateada) {
+      formulario.cantidad = cantidadFormateada
+      return
+    }
+
     if (nuevaCantidad > MAX_DIGITOS) {
       formulario.cantidad = MAX_DIGITOS
     }
 
-    // B. Capear si el producto (Obtendrás) supera el límite
+    // Capear si el producto (Obtendrás) supera el límite
     if (formulario.cantidad * formulario.tasaCambio > MAX_DIGITOS) {
       formulario.cantidad = parseFloat((MAX_DIGITOS / formulario.tasaCambio).toFixed(2))
     }
@@ -194,12 +202,22 @@ watch(
   (nuevaTasa) => {
     if (!nuevaTasa) return
 
-    // A. Capear si la tasa por sí sola supera los 9 dígitos
+    if (nuevaTasa < 0) {
+      formulario.tasaCambio = 0
+      return
+    }
+
+    const tasaFormateada = parseFloat(nuevaTasa.toFixed(4))
+    if (nuevaTasa !== tasaFormateada) {
+      formulario.tasaCambio = tasaFormateada
+      return
+    }
+
     if (nuevaTasa > MAX_DIGITOS) {
       formulario.tasaCambio = MAX_DIGITOS
     }
 
-    // B. Capear si el producto (Obtendrás) supera el límite
+    // Capear si el producto (Obtendrás) supera el límite
     if (formulario.cantidad * formulario.tasaCambio > MAX_DIGITOS) {
       formulario.tasaCambio = parseFloat((MAX_DIGITOS / formulario.cantidad).toFixed(4))
     }
@@ -209,33 +227,26 @@ watch(
 // Función temporal para probar en consola antes de conectar Axios
 const prepararPublicacion = async () => {
   try {
-    // 1. Mostrar estado de carga (opcional pero buena UX)
     $q.loading.show({ message: 'Publicando oferta...' })
 
-    // 2. Armar el DTO exactamente como lo espera tu backend en .NET
     const payload = {
       monedaAEnviar: formulario.monedaTengo.value,
       monedaARecibir: formulario.monedaQuiero.value,
       tipoCambio: formulario.tasaCambio,
       cantidad: formulario.cantidad,
-      // Nota: No enviamos clienteId, porque el backend lo saca del Token
     }
 
-    // 3. Hacer la petición POST al endpoint (revisa que la ruta coincida con tu controller)
     const response = await api.post('/ofertas', payload)
 
-    response.data // Aquí podrías hacer algo con la respuesta si quieres
-    // 4. Éxito
+    response.data
     $q.notify({
       type: 'positive',
       message: 'Oferta publicada con éxito',
       position: 'top',
     })
 
-    // Redirigir al usuario al mercado o inicio
     router.push('/ofertas')
   } catch (error) {
-    // 5. Manejo de errores
     console.error(error)
     $q.notify({
       type: 'negative',
@@ -243,7 +254,6 @@ const prepararPublicacion = async () => {
       position: 'top',
     })
   } finally {
-    // 6. Ocultar el loading
     $q.loading.hide()
   }
 }
