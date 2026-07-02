@@ -8,8 +8,8 @@
 
         <q-space />
 
-        <q-btn flat label="tipo de cambio" class="nav-btn" />
-        <q-btn flat label="mis ofertas" class="nav-btn" />
+        <q-btn flat label="tipo de cambio" to="/tipo-cambio" class="nav-btn" no-caps />
+        <q-btn flat label="mis ofertas" to="/ofertas" class="nav-btn" no-caps />
 
         <q-btn flat round icon="account_circle" size="lg" class="q-ml-sm" to="/login" />
       </q-toolbar>
@@ -49,5 +49,6 @@ const goToHome = () => {
 
 .nav-btn {
   font-size: 1rem;
+  letter-spacing: 0.5px;
 }
 </style>
