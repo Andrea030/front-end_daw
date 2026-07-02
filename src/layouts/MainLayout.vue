@@ -28,7 +28,7 @@ const router = useRouter()
 
 // Función para redirigir a la página de inicio al hacer click en el título
 const goToHome = () => {
-  router.push('/home')
+  router.push('/')
 }
 </script>
 
