@@ -47,6 +47,8 @@
               class="login-btn q-py-sm q-px-lg text-weight-bold"
               unelevated
               no-caps
+              @click="iniciarSesion"
+              :loading="cargando"
             />
           </div>
         </div>
@@ -64,9 +66,76 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useQuasar } from 'quasar'
+import axios from 'axios'
 
+// Variables de Quasar y Vue Router
+const router = useRouter()
+const $q = useQuasar()
+
+// Variables reactivas para el formulario
 const correo = ref('')
 const contrasena = ref('')
+const cargando = ref(false) // Para mostrar la animación de carga en el botón
+
+// URL de tu API (ajusta el puerto si es diferente)
+const baseUrl = 'http://localhost:5000'
+
+const iniciarSesion = async () => {
+  // 1. Validación básica en el frontend
+  if (!correo.value || !contrasena.value) {
+    $q.notify({
+      type: 'warning',
+      message: 'Por favor, completa ambos campos.',
+      position: 'top'
+    })
+    return
+  }
+
+  // Iniciamos la animación del botón
+  cargando.value = true
+
+  try {
+    // 2. Realizamos la petición POST a la API (Igual que en Postman)
+    const response = await axios.post(`${baseUrl}/api/auth/login`, {
+      email: correo.value,
+      password: contrasena.value
+    })
+
+    // 3. Extraemos el token de la respuesta
+    const token = response.data.token
+
+    if (token) {
+      // 4. Guardamos el token en el almacenamiento del navegador
+      localStorage.setItem('token', token)
+
+      $q.notify({
+        type: 'positive',
+        message: '¡Bienvenido de vuelta!',
+        position: 'top'
+      })
+
+      // 5. Redirigimos a la página de inicio (ajusta la ruta según tu proyecto)
+      router.push('/')
+    } else {
+      throw new Error('No se recibió el token de la API')
+    }
+
+  } catch (error) {
+    console.error('Error al iniciar sesión:', error)
+    
+    // Mostramos mensaje de error si las credenciales fallan o el server cae
+    $q.notify({
+      type: 'negative',
+      message: error.response?.data?.message || 'Credenciales incorrectas. Inténtalo de nuevo.',
+      position: 'top'
+    })
+  } finally {
+    // Detenemos la animación del botón sin importar si fue éxito o error
+    cargando.value = false
+  }
+}
 </script>
 
 <style scoped>

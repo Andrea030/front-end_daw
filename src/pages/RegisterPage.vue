@@ -13,29 +13,6 @@
           </div>
 
           <div class="form-section">
-            <div class="row q-col-gutter-md q-mb-md">
-              <div class="col-12 col-sm-6">
-                <q-input
-                  v-model="nombres"
-                  outlined
-                  dense
-                  placeholder="Nombres"
-                  class="custom-input"
-                  hide-bottom-space
-                />
-              </div>
-              <div class="col-12 col-sm-6">
-                <q-input
-                  v-model="apellidos"
-                  outlined
-                  dense
-                  placeholder="Apellidos"
-                  class="custom-input"
-                  hide-bottom-space
-                />
-              </div>
-            </div>
-
             <div class="q-mb-md">
               <q-input
                 v-model="usuario"
@@ -92,6 +69,8 @@
                 class="action-btn q-py-sm q-px-lg text-weight-bold"
                 unelevated
                 no-caps
+                @click="crearCuenta"
+                :loading="cargando"
               />
             </div>
           </div>
@@ -110,13 +89,105 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useQuasar } from 'quasar'
+import axios from 'axios'
 
-const nombres = ref('')
-const apellidos = ref('')
+// Variables de Vue Router y Quasar
+const router = useRouter()
+const $q = useQuasar()
+
+// Variables reactivas del formulario
 const usuario = ref('')
 const correo = ref('')
 const contrasena = ref('')
 const confirmarContrasena = ref('')
+const cargando = ref(false)
+
+// URL de tu API
+const baseUrl = 'http://localhost:5000'
+
+const crearCuenta = async () => {
+  // 1. Validaciones básicas en el frontend antes de enviar a la API
+  if (!usuario.value || !correo.value || !contrasena.value || !confirmarContrasena.value) {
+    $q.notify({ type: 'warning', message: 'Por favor, completa todos los campos.', position: 'top' })
+    return
+  }
+
+  if (contrasena.value !== confirmarContrasena.value) {
+    $q.notify({ type: 'warning', message: 'Las contraseñas no coinciden.', position: 'top' })
+    return
+  }
+
+  cargando.value = true
+
+  try {
+    // 2. Realizamos la petición POST al backend
+    const response = await axios.post(`${baseUrl}/api/auth/registro`, {
+      nombre: usuario.value,
+      email: correo.value,
+      password: contrasena.value
+    })
+
+    // 3. Éxito: Mostramos el mensaje de la API (Imagen 1) y redirigimos
+    $q.notify({
+      type: 'positive',
+      message: response.data.mensaje || 'Usuario registrado exitosamente.',
+      position: 'top'
+    })
+    
+    router.push('/')
+
+  } catch (error) {
+    console.error('Error al registrar usuario:', error)
+
+    // 4. Manejo de Errores Dinámico (Imágenes 2 y 3)
+    if (error.response && error.response.status === 400) {
+      const data = error.response.data
+
+      // Escenario A: Error estructurado de validación (.NET ModelState - Imagen 2)
+      // Ejemplo: La contraseña debe tener al menos 6 caracteres
+      if (data.errors) {
+        // Recorremos los errores y mostramos una notificación por cada uno
+        for (const campo in data.errors) {
+          data.errors[campo].forEach(mensajeError => {
+            $q.notify({
+              type: 'negative',
+              message: mensajeError,
+              position: 'top'
+            })
+          })
+        }
+      } 
+      // Escenario B: Mensaje de error personalizado (Imagen 3)
+      // Ejemplo: El correo electrónico ya se encuentra registrado
+      else if (data.mensaje) {
+        $q.notify({
+          type: 'negative',
+          message: data.mensaje,
+          position: 'top'
+        })
+      } 
+      // Escenario C: Error 400 genérico
+      else {
+        $q.notify({
+          type: 'negative',
+          message: 'Error en el registro. Revisa tus datos.',
+          position: 'top'
+        })
+      }
+    } else {
+      // Error 500 u otros problemas de conexión
+      $q.notify({
+        type: 'negative',
+        message: 'No se pudo conectar con el servidor.',
+        position: 'top'
+      })
+    }
+  } finally {
+    cargando.value = false
+  }
+}
 </script>
 
 <style scoped>
