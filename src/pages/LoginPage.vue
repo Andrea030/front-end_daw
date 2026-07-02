@@ -18,7 +18,7 @@
 
           <div class="form-section">
             <div class="q-mb-md">
-              <label class="form-label q-mb-sm">Ingrese su usuario o correo electrónico:</label>
+              <label class="form-label q-mb-sm">Ingrese su correo electrónico:</label>
               <q-input
                 v-model="correo"
                 outlined
