@@ -227,7 +227,7 @@ const checkIsLoggedIn = () => {
 // --- REDIRECCIONES ---
 const handlePublishOffer = () => {
   if (checkIsLoggedIn()) {
-    router.push('/publicarOferta')
+    router.push('/crear-oferta')
   } else {
     $q.notify({ type: 'warning', message: 'Inicia sesión para publicar.', position: 'top' })
     router.push('/login')
@@ -249,7 +249,7 @@ const fetchInitialData = async () => {
   try {
     // Ya no necesitas consultar /api/clientes, el DTO de ofertas ya trae esos datos
     const offersResponse = await axios.get(`${baseUrl}/api/ofertas`)
-    
+
     // Guardamos la respuesta tal cual viene de Postman
     rawOffers.value = offersResponse.data || []
   } catch (error) {
