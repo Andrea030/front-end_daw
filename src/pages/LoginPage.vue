@@ -117,7 +117,7 @@ const iniciarSesion = async () => {
       })
 
       // 5. Redirigimos a la página de inicio (ajusta la ruta según tu proyecto)
-      router.push('/home')
+      router.push('/')
     } else {
       throw new Error('No se recibió el token de la API')
     }

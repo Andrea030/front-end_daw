@@ -298,7 +298,6 @@ const filteredOffers = computed(() => {
   } else if (filterRating.value === 'worst') {
     result.sort((a, b) => Number(a.calificacionUsuario) - Number(b.calificacionUsuario))
   }
-  console.log('Query:', searchQuery.value) // Debugging line to check filtered results
 
   return result
 })
