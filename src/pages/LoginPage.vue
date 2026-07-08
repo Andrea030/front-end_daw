@@ -1,7 +1,6 @@
 <template>
   <q-layout view="lHh Lpr lFf"> 
     <q-page-container>
-
       <q-page class="flex flex-center q-pa-md" style="background-color: rgb(193, 184, 127)">
         <q-card class="split-card row overflow-hidden no-shadow">
           <div class="col-12 col-md-6 bg-white q-pa-xl flex flex-center">
@@ -65,7 +64,6 @@
           </div>
         </q-card>
       </q-page>
-
     </q-page-container>
   </q-layout>
 </template>
