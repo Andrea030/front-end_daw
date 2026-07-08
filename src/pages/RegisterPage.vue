@@ -1,90 +1,96 @@
 <template>
-  <q-page class="flex flex-center q-pa-md" style="background-color: #b2ab8c">
-    <q-card class="split-card row overflow-hidden no-shadow">
-      <div class="col-12 col-md-6 bg-white q-pa-xl flex flex-center">
-        <div class="form-container">
-          <div class="header-section q-mb-lg text-left">
-            <h2 class="text-h3 text-weight-bold q-mt-none q-mb-sm title-text">Crea tu Cuenta</h2>
-            <div class="text-subtitle1 text-grey-9 q-mb-md auth-subtitle">
-              ¿Ya tienes una cuenta?
-              <router-link to="/login" class="login-link text-indigo-5">Inicia Sesión</router-link>
-            </div>
-            <q-separator color="grey-4" />
-          </div>
+  <q-layout view="lHh Lpr lFf"> 
+    <q-page-container>
 
-          <div class="form-section">
-            <div class="q-mb-md">
-              <q-input
-                v-model="usuario"
-                outlined
-                dense
-                placeholder="Ingrese su Usuario"
-                class="custom-input"
-                hide-bottom-space
-              />
-              <div class="hint-text q-mt-xs q-ml-sm text-grey-6 text-left">
-                Su usuario será visible en todos lados.
+      <q-page class="flex flex-center q-pa-md" style="background-color: #b2ab8c">
+        <q-card class="split-card row overflow-hidden no-shadow">
+          <div class="col-12 col-md-6 bg-white q-pa-xl flex flex-center">
+            <div class="form-container">
+              <div class="header-section q-mb-lg text-left">
+                <h2 class="text-h3 text-weight-bold q-mt-none q-mb-sm title-text">Crea tu Cuenta</h2>
+                <div class="text-subtitle1 text-grey-9 q-mb-md auth-subtitle">
+                  ¿Ya tienes una cuenta?
+                  <router-link to="/login" class="login-link text-indigo-5">Inicia Sesión</router-link>
+                </div>
+                <q-separator color="grey-4" />
+              </div>
+    
+              <div class="form-section">
+                <div class="q-mb-md">
+                  <q-input
+                    v-model="usuario"
+                    outlined
+                    dense
+                    placeholder="Ingrese su Usuario"
+                    class="custom-input"
+                    hide-bottom-space
+                  />
+                  <div class="hint-text q-mt-xs q-ml-sm text-grey-6 text-left">
+                    Su usuario será visible en todos lados.
+                  </div>
+                </div>
+    
+                <div class="q-mb-md">
+                  <q-input
+                    v-model="correo"
+                    type="email"
+                    outlined
+                    dense
+                    placeholder="Correo Electrónico"
+                    class="custom-input"
+                    hide-bottom-space
+                  />
+                </div>
+    
+                <div class="q-mb-md">
+                  <q-input
+                    v-model="contrasena"
+                    type="password"
+                    outlined
+                    dense
+                    placeholder="Ingresar Contraseña"
+                    class="custom-input"
+                    hide-bottom-space
+                  />
+                </div>
+    
+                <div class="q-mb-xl">
+                  <q-input
+                    v-model="confirmarContrasena"
+                    type="password"
+                    outlined
+                    dense
+                    placeholder="Confirmar Contraseña"
+                    class="custom-input"
+                    hide-bottom-space
+                  />
+                </div>
+    
+                <div class="text-left">
+                  <q-btn
+                    label="CREAR CUENTA"
+                    class="action-btn q-py-sm q-px-lg text-weight-bold"
+                    unelevated
+                    no-caps
+                    @click="crearCuenta"
+                    :loading="cargando"
+                  />
+                </div>
               </div>
             </div>
-
-            <div class="q-mb-md">
-              <q-input
-                v-model="correo"
-                type="email"
-                outlined
-                dense
-                placeholder="Correo Electrónico"
-                class="custom-input"
-                hide-bottom-space
-              />
-            </div>
-
-            <div class="q-mb-md">
-              <q-input
-                v-model="contrasena"
-                type="password"
-                outlined
-                dense
-                placeholder="Ingresar Contraseña"
-                class="custom-input"
-                hide-bottom-space
-              />
-            </div>
-
-            <div class="q-mb-xl">
-              <q-input
-                v-model="confirmarContrasena"
-                type="password"
-                outlined
-                dense
-                placeholder="Confirmar Contraseña"
-                class="custom-input"
-                hide-bottom-space
-              />
-            </div>
-
-            <div class="text-left">
-              <q-btn
-                label="CREAR CUENTA"
-                class="action-btn q-py-sm q-px-lg text-weight-bold"
-                unelevated
-                no-caps
-                @click="crearCuenta"
-                :loading="cargando"
-              />
+          </div>
+    
+          <div class="col-12 col-md-6 flex flex-center right-panel">
+            <div class="logo-circle flex flex-center shadow-3">
+              <q-icon name="sync" class="sync-icon" />
+              <span class="currency-text">$€</span>
             </div>
           </div>
-        </div>
-      </div>
+        </q-card>
+      </q-page>
 
-      <div class="col-12 col-md-6 flex flex-center right-panel">
-        <div class="logo-circle flex flex-center shadow-3">
-          <q-icon name="sync" class="sync-icon" />
-          <span class="currency-text">$€</span>
-        </div>
-      </div>
-    </q-card>
-  </q-page>
+    </q-page-container>
+  </q-layout> 
 </template>
 
 <script setup>
