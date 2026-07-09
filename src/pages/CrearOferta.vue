@@ -291,16 +291,16 @@ watch(
   },
 )
 
-// 3. FLUJO DE CONTROL: Publicación y Verificación de Duplicados
+// 3. FLUJO DE CONTROL: Publicación con doble confirmación y resumen de datos
 const prepararPublicacion = async () => {
   if (!formulario.monedaTengo || !formulario.monedaQuiero) return
-
-  if (publicando.value) return // Evita múltiples clics
+  if (publicando.value) return // Evita múltiples clics por accidente
 
   try {
-    publicando.value = true //bloquear boton de inmediato
+    publicando.value = true 
     $q.loading.show({ message: 'Buscando coincidencias en el mercado...' })
 
+    // Paso 1: Petición para buscar coincidencias
     const respuestaCoincidencia = await api.get('/ofertas/buscar-coincidencia', {
       params: {
         monedaAEnviar: formulario.monedaTengo,
@@ -310,32 +310,47 @@ const prepararPublicacion = async () => {
       }
     })
 
-    $q.loading.hide() // Ocultamos para poder mostrar diálogos si es necesario
+    $q.loading.hide() // Ocultamos el loading para los diálogos
 
+    // Paso 2: Evaluar si encontró coincidencias
     if (respuestaCoincidencia.data) {
       const match = respuestaCoincidencia.data
 
       $q.dialog({
         title: '¡Coincidencia de mercado encontrada!',
-        message: `El usuario ${match.nombreUsuario} tiene una oferta activa que calza con lo que buscas. Está ofreciendo una tasa de ${match.tipoCambio.toFixed(4)} por una cantidad de ${match.cantidad}. ¿Deseas ver su oferta para realizar el intercambio directo o prefieres publicar tu oferta de todos modos?`,
-        cancel: { label: 'Publicar de todos modos', flat: true, color: 'grey-8' },
+        html: true,
+        message: `
+          <div class="q-py-sm">
+            <p class="text-grey-7 q-mb-md">El usuario <strong>${match.nombreUsuario}</strong> tiene una oferta activa que calza con lo que buscas:</p>
+              <div class="bg-grey-2 q-pa-md border-radius-inherit" style="border-radius: 8px;">
+                <div class="row q-mb-xs"><strong>Ofrece una tasa de:</strong><span class="q-ml-xs">${match.tipoCambio.toFixed(4)}</span></div>
+                <div class="row q-mb-xs"><strong>Por una cantidad de: </strong> <span class="q-ml-xs"> ${match.cantidad} ${formulario.monedaQuiero}</span></div>
+              </div>
+            <p class="text-weight-medium text-center q-mt-lg text-dark text-subtitle1">¿Deseas ver su oferta para realizar el intercambio directo o prefieres seguir con tu proceso?</p>
+          </div>
+        `,
+        
+        cancel: { label: 'Seguir con la publicación', flat: true, color: 'grey-8' },
         ok: { label: 'Ver Oferta de Contraparte', color: 'primary' },
-        persistent: true
+        persistent: false
       }).onOk(() => {
-        publicando.value = false // Liberamos el botón si decide salir de la pantalla
-        // Redirecciona al detalle de la oferta que le hace el match perfecto
+        publicando.value = false // Liberamos el botón si sale de la pantalla
         router.push(`/ofertas/${match.id}`)
-      }).onCancel(async () => {
-        // Si el usuario decide ignorar el match y prefiere dejar su propia oferta flotando
-        await ejecutarPublicacionPost()
+      }).onCancel(() => {
+        // Redirecciona directamente al diálogo de confirmación (Resumen ordenado)
+        abrirDialogoConfirmacionResumen()
+      }).onDismiss(() => {
+        // Si cierra con la "X" o da clic afuera, liberamos el botón para que siga editando
+        publicando.value = false
       })
+
     } else {
-      await ejecutarPublicacionPost()
+      abrirDialogoConfirmacionResumen()
     }
 
   } catch (error) {
     $q.loading.hide()
-    publicando.value = false // Desbloqueamos el botón si el servidor falla
+    publicando.value = false 
     console.error('Error en el flujo de matching:', error)
     $q.notify({
       type: 'negative',
@@ -343,6 +358,44 @@ const prepararPublicacion = async () => {
       position: 'top'
     })
   }
+}
+
+// Nueva función auxiliar para mostrar el resumen ordenado antes de realizar el POST
+const abrirDialogoConfirmacionResumen = () => {
+  $q.dialog({
+    title: 'Confirmar Datos de la Oferta',
+    html: true,
+    message: `
+      <div class="q-py-sm">
+        <p class="text-grey-7 q-mb-md">Por favor, verifica que los datos ingresados sean correctos antes de continuar:</p>
+        <div class="bg-grey-2 q-pa-md border-radius-inherit" style="border-radius: 8px;">
+          <div class="row q-mb-xs"><strong>Moneda a entregar (Tengo):</strong> <span class="q-ml-xs">${formulario.monedaTengo}</span></div>
+          <div class="row q-mb-xs"><strong>Cantidad a enviar:</strong> <span class="q-ml-xs">${formulario.cantidad.toFixed(2)} ${formulario.monedaTengo}</span></div>
+          <div class="row q-mb-xs"><strong>Tasa de cambio propuesta:</strong> <span class="q-ml-xs">${formulario.tasaCambio.toFixed(4)}</span></div>
+          <q-separator class="q-my-sm" />
+          <div class="row text-subtitle2" style="color: #a87b5d">
+            <strong>Moneda a recibir (Quiero):</strong> <span class="q-ml-xs">${formulario.monedaQuiero}</span>
+          </div>
+          <div class="row text-subtitle2" style="color: #a87b5d">
+            <strong>Total estimado que obtendrás:</strong> <span class="q-ml-xs">${cantidadARecibir.value} ${formulario.monedaQuiero}</span>
+          </div>
+        </div>
+        <p class="text-weight-medium text-center q-mt-lg text-dark text-subtitle1">¿Desea Publicar?</p>
+      </div>
+    `,
+    cancel: { label: 'Aún no', flat: true, color: 'grey-8' },
+    ok: { label: 'Sí, publicar', color: 'primary' },
+    persistent: true
+  }).onOk(async () => {
+    // Si da clic en "Sí, publicar", finalmente se hace el POST real al servidor
+    await ejecutarPublicacionPost()
+  }).onCancel(() => {
+    // Si da clic en "Aún no", liberamos el botón para que pueda editar los campos
+    publicando.value = false
+  }).onDismiss(() => {
+    // Protección extra en caso de cierre inesperado
+    publicando.value = false
+  })
 }
 
 // El método POST real aislado
