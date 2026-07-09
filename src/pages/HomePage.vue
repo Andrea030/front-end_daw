@@ -17,45 +17,70 @@
             <span class="filter-label">Tengo (Enviar)</span>
             <q-select
               v-model="filterSend"
-              :options="currencyOptions"
+              :options="opcionesFiltradas"
+              use-input
+              hide-selected
+              fill-input
+              input-debounce="0"
+              @filter="filtrarMonedas"
               outlined
               dense
               emit-value
               map-options
+              clearable
               class="q-mb-sm"
             />
 
             <span class="filter-label">Quiero (Recibir)</span>
             <q-select
               v-model="filterReceive"
-              :options="currencyOptions"
+              :options="opcionesFiltradas"
+              use-input
+              hide-selected
+              fill-input
+              input-debounce="0"
+              @filter="filtrarMonedas"
               outlined
               dense
               emit-value
               map-options
+              clearable
             />
           </div>
 
           <div class="filter-group-large">
-            <span class="filter-label">Tipo de cambio máximo</span>
+            <div class="row justify-between items-center q-mb-xs">
+              <span class="filter-label q-ma-none">Tipo de cambio máximo</span>
+              <q-btn
+                v-if="maxRate !== null"
+                label="Limpiar"
+                flat
+                dense
+                color="negative"
+                size="xs"
+                @click="maxRate = null"
+              />
+            </div>
             <div class="row q-col-gutter-sm items-center q-mb-xs">
               <div class="col-7">
-                <q-slider v-model="maxRate" :min="0" :max="5" :step="0.01" color="primary" />
+                <q-slider :model-value="maxRate ?? 200.0" @update:model-value="val => maxRate = val" :min="0" :max="200" :step="1.00" color="primary" />
               </div>
               <div class="col-5">
                 <q-input
-                  v-model.number="maxRate"
+                  :model-value="maxRate"
+                  @update:model-value="val => maxRate = val === '' ? null : Number(val)"
                   type="number"
-                  step="0.01"
+                  step="1.00"
                   outlined
                   dense
+                  placeholder="Max"
                   class="text-right"
                 />
               </div>
             </div>
             <div class="row justify-between text-caption text-grey-7">
               <span>0.00</span>
-              <span>5.00+</span>
+              <span>200.00+</span>
             </div>
           </div>
 
@@ -190,6 +215,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { useQuasar } from 'quasar'
+import { uniRateService } from 'src/services/uniRateService'
 
 const $q = useQuasar()
 const router = useRouter()
@@ -201,20 +227,71 @@ const rawOffers = ref([])
 // --- VARIABLES DE MODELO DE FILTROS ---
 const searchQuery = ref('')
 const sortBy = ref('default')
-const filterSend = ref(null) // Moneda a enviar por defecto
-const filterReceive = ref(null) // Moneda a recibir por defecto
-const maxRate = ref(5.0) // Sincronizado numéricamente para slider/input
+const filterSend = ref(null) // Moneda a enviar por defecto (Todas)
+const filterReceive = ref(null) // Moneda a recibir por defecto (Todas)
+const maxRate = ref(null) // Sincronizado numéricamente para slider/input
 const filterRating = ref(null) // Guarda 'best', 'worst' o null dinámicamente
 
-const currencyOptions = [
-  { label: 'Todas las monedas', value: null },
-  { label: 'USD - Dólares', value: 'USD' },
-  { label: 'PEN - Soles', value: 'PEN' },
-  { label: 'EUR - Euros', value: 'EUR' },
-]
+// --- LÓGICA DE MONEDAS DINÁMICAS DESDE UNIRATESERVICE ---
+const opcionesMonedas = ref([])
+const opcionesFiltradas = ref([])
+
+// Método para cargar el listado de monedas desde tu servicio unificado
+const cargarMonedasDelServicio = async () => {
+  try {
+    // 1. Cambiamos fetchSupportedCurrencies() por el método real: obtenerMonedasDisponibles()
+    const monedas = await uniRateService.obtenerMonedasDisponibles()
+    
+    // 2. Si tu servicio ya las devuelve mapeadas con 'label' y 'value', las asignamos directo.
+    // En caso de que vengan crudas de la API externa, mantenemos este mapeo preventivo:
+    const monedasMapeadas = monedas.map(moneda => {
+      // Si ya viene con estructura para q-select:
+      if (moneda.label && moneda.value) return moneda
+      
+      // Si viene con la estructura cruda de UniRate (ej: symbol y name):
+      return {
+        label: `${moneda.symbol || moneda.code} - ${moneda.name || ''}`,
+        value: moneda.symbol || moneda.code
+      }
+    })
+
+    // 3. Insertamos la opción para limpiar el filtro al inicio
+    opcionesMonedas.value = [
+      { label: 'Todas las monedas', value: null },
+      ...monedasMapeadas
+    ]
+    
+    // Forzamos la actualización de la lista reactiva que usa el q-select
+    opcionesFiltradas.value = [...opcionesMonedas.value]
+    
+  } catch (error) {
+    console.error('Error al cargar monedas de uniRateService:', error)
+  }
+}
+
+// Función encargada de filtrar las opciones cuando el usuario escribe en el dropdown
+const filtrarMonedas = (val, update) => {
+  // Si el usuario no ha escrito nada, cargamos la lista completa
+  if (val === '') {
+    update(() => {
+      opcionesFiltradas.value = opcionesMonedas.value
+    })
+    return
+  }
+
+  update(() => {
+    const terminoBusqueda = val.toLowerCase()
+    opcionesFiltradas.value = opcionesMonedas.value.filter(
+      mo => {
+        const labelOk = mo.label && mo.label.toLowerCase().includes(terminoBusqueda)
+        const valueOk = mo.value && mo.value.toLowerCase().includes(terminoBusqueda)
+        return labelOk || valueOk
+      }
+    )
+  })
+}
 
 const sortOptions = [
-  { label: 'Todas las monedas', value: null },
   { label: 'Por defecto', value: 'default' },
   { label: 'Menor Tasa', value: 'rate_asc' },
   { label: 'Mayor Tasa', value: 'rate_desc' },
@@ -243,14 +320,11 @@ const handleExchange = (offerId) => {
   }
 }
 
-// --- CONSUMO DE ENDPOINTS ADAPTADO A TU RESPUESTA REAL DE POSTMAN ---
+// --- CONSUMO DE ENDPOINTS ---
 const fetchInitialData = async () => {
   loading.value = true
   try {
-    // Ya no necesitas consultar /api/clientes, el DTO de ofertas ya trae esos datos
     const offersResponse = await axios.get(`${baseUrl}/api/ofertas`)
-
-    // Guardamos la respuesta tal cual viene de Postman
     rawOffers.value = offersResponse.data || []
   } catch (error) {
     console.error('Error cargando las ofertas:', error)
@@ -261,7 +335,6 @@ const fetchInitialData = async () => {
 
 // --- LÓGICA DE FILTRADO Y ORDENAMIENTO EN VUE ---
 const filteredOffers = computed(() => {
-  // Evaluamos usando la propiedad real 'estado' en minúscula
   let result = rawOffers.value.filter((o) => o.estado === true)
 
   if (filterSend.value) {
@@ -272,7 +345,7 @@ const filteredOffers = computed(() => {
     result = result.filter((o) => o.monedaARecibir === filterReceive.value)
   }
 
-  if (maxRate.value) {
+  if (maxRate.value !== null && maxRate.value < 200.0) {
     result = result.filter((o) => Number(o.tipoCambio) <= Number(maxRate.value))
   }
 
@@ -286,13 +359,13 @@ const filteredOffers = computed(() => {
     )
   }
 
+  // Ordenamientos
   if (sortBy.value === 'rate_asc') {
     result.sort((a, b) => a.tipoCambio - b.tipoCambio)
   } else if (sortBy.value === 'rate_desc') {
     result.sort((a, b) => b.tipoCambio - a.tipoCambio)
   }
 
-  // Ordenamiento basado en las llaves correctas de calificación
   if (filterRating.value === 'best') {
     result.sort((a, b) => Number(b.calificacionUsuario) - Number(a.calificacionUsuario))
   } else if (filterRating.value === 'worst') {
@@ -304,6 +377,7 @@ const filteredOffers = computed(() => {
 
 onMounted(() => {
   fetchInitialData()
+  cargarMonedasDelServicio() // <--- Llamada añadida para poblar los filtros dinámicamente al cargar la vista
 })
 </script>
 
