@@ -91,7 +91,7 @@
           </q-card-section>
 
           <q-card-actions align="right" class="q-pt-none q-px-md q-pb-md">
-            <q-btn flat label="Cancelar" color="grey-8" no-caps class="q-mr-sm" />
+            <q-btn flat label="Cancelar" color="grey-8" no-caps class="q-mr-sm" @click="volverAtras"/>
             <q-btn
               unelevated
               label="Publicar Oferta"
