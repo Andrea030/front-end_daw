@@ -303,13 +303,6 @@ const filteredOffers = computed(() => {
 })
 
 onMounted(() => {
-  localStorage.setItem(
-    'token',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjEiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiI2N1NldmVuZWl0b3I2NjZAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvbmFtZSI6IjY3U2V2ZW5laXRvcjY2NiIsImV4cCI6MTc4MjQyNjM2NywiaXNzIjoiU21hbGxDaGFuZ2VBUEkiLCJhdWQiOiJTbWFsbENoYW5nZUZyb250ZW5kIn0.RgoMQfaIx1wB90DvTUGIdWSbQVAaIVneg2i8jbVFBwQ',
-  )
-
-  // localStorage.removeItem('token')
-
   fetchInitialData()
 })
 </script>

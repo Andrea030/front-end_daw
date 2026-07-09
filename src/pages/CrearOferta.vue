@@ -224,11 +224,12 @@ watch(
   },
 )
 
-// Función temporal para probar en consola antes de conectar Axios
 const prepararPublicacion = async () => {
   try {
+    // 1. Mostrar el spinner de carga de Quasar
     $q.loading.show({ message: 'Publicando oferta...' })
 
+    // 2. El payload sigue igual (el interceptor le inyectará el Header 'Authorization' automáticamente)
     const payload = {
       monedaAEnviar: formulario.monedaTengo.value,
       monedaARecibir: formulario.monedaQuiero.value,
@@ -236,24 +237,30 @@ const prepararPublicacion = async () => {
       cantidad: formulario.cantidad,
     }
 
-    const response = await api.post('/ofertas', payload)
+    // 3. Realizar la petición POST
+    await api.post('/ofertas', payload)
 
-    response.data
+    // 4. Mostrar feedback positivo al usuario
     $q.notify({
       type: 'positive',
       message: 'Oferta publicada con éxito',
       position: 'top',
     })
 
-    router.push('/home')
+    // 5. Redireccionar al usuario
+    router.push('/') 
+    
   } catch (error) {
-    console.error(error)
+    console.error('Error al publicar la oferta:', error)
+    
+    // Si el backend te devuelve un mensaje de error específico, lo mostramos
     $q.notify({
       type: 'negative',
       message: error.response?.data?.mensaje || 'Error al conectar con el servidor',
       position: 'top',
     })
   } finally {
+    // Asegurar que el loading siempre se oculte, falle o tenga éxito la petición
     $q.loading.hide()
   }
 }
