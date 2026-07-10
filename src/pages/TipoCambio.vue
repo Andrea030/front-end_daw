@@ -1,7 +1,7 @@
 <template>
   <q-page padding class="bg-grey-1">
     <div style="max-width: 900px; margin: 0 auto">
-      <div class="row justify-start q-mb-lg">
+      <div class="row justify-start q-mb-lg animate-fade-up">
         <q-breadcrumbs active-color="dark" class="text-grey-7">
           <q-breadcrumbs-el
             label="Volver | "
@@ -20,15 +20,18 @@
         </q-breadcrumbs>
       </div>
 
-      <div class="text-h3 text-weight-bold text-dark q-mb-lg" style="letter-spacing: -1px">
+      <div
+        class="text-h3 text-weight-bold text-dark q-mb-lg animate-fade-up"
+        style="letter-spacing: -1px; animation-delay: 0.1s"
+      >
         {{ formulario.cantidad }} {{ nombreMonedaBase }} a {{ formulario.monedaQuiero }}
       </div>
 
       <q-card
         flat
         bordered
-        class="q-pa-xl bg-white q-mb-xl"
-        style="border-radius: 8px; border-color: #e0e0e0"
+        class="q-pa-xl bg-white q-mb-xl animate-fade-up"
+        style="border-radius: 8px; border-color: #e0e0e0; animation-delay: 0.2s"
       >
         <div class="row q-col-gutter-md items-center">
           <div class="col-12 col-md-5">
@@ -60,6 +63,10 @@
               color="positive"
               size="lg"
               @click="invertirMonedas"
+              :style="{
+                transform: `rotate(${rotacionSwap}deg)`,
+                transition: 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              }"
             />
           </div>
 
@@ -100,6 +107,7 @@
           </div>
 
           <div class="col-12 col-md-2"></div>
+
           <div class="col-12 col-md-5">
             <q-input
               filled
@@ -108,16 +116,53 @@
               :model-value="cantidadConvertida"
               input-style="font-size: 28px; padding: 20px 0; color: #424242;"
               :loading="cargandoTasa"
+              :class="{ 'animacion-pulso': pulsoActivo }"
             />
+          </div>
+        </div>
+        <div
+          class="row q-col-gutter-md q-mt-xs q-mb-lg animate-fade-up"
+          style="animation-delay: 0.25s"
+        >
+          <div class="col-12 col-md-5">
+            <div
+              class="text-caption text-grey-6 text-weight-medium q-pl-sm"
+              style="font-size: 13px"
+            >
+              1 {{ formulario.monedaTengo }} = {{ tasaActualFormateada }}
+              {{ formulario.monedaQuiero }}
+            </div>
+          </div>
+
+          <div class="col-12 col-md-2"></div>
+
+          <div class="col-12 col-md-5">
+            <div
+              class="text-caption text-grey-6 text-weight-medium q-pl-sm"
+              style="font-size: 13px"
+            >
+              1 {{ formulario.monedaQuiero }} = {{ tasaInversaFormateada }}
+              {{ formulario.monedaTengo }}
+            </div>
           </div>
         </div>
       </q-card>
 
       <div class="q-mt-xl">
-        <div class="text-h5 text-weight-bold text-dark q-mb-lg">Conversiones populares</div>
+        <div
+          class="text-h5 text-weight-bold text-dark q-mb-lg animate-fade-up"
+          style="animation-delay: 0.3s"
+        >
+          Conversiones populares
+        </div>
 
         <div class="row q-col-gutter-md">
-          <div class="col-12 col-sm-6" v-for="(par, index) in conversionesPopulares" :key="index">
+          <div
+            class="col-12 col-sm-6 animate-fade-up"
+            v-for="(par, index) in conversionesPopulares"
+            :key="index"
+            :style="{ animationDelay: `${0.4 + index * 0.05}s` }"
+          >
             <q-card
               flat
               bordered
@@ -128,7 +173,7 @@
               <div class="text-weight-bold text-dark text-subtitle1">
                 1 {{ par.base }} a {{ par.destino }}
               </div>
-              <q-icon name="chevron_right" size="sm" color="dark" />
+              <q-icon name="chevron_right" size="sm" color="dark" class="flecha-icono" />
             </q-card>
           </div>
         </div>
@@ -142,7 +187,7 @@ import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useBreadcrumbStore } from 'stores/breadcrumbStore'
-import { uniRateService } from 'src/services/uniRateService' // Tu servicio de API
+import { uniRateService } from 'src/services/uniRateService'
 
 const router = useRouter()
 const $q = useQuasar()
@@ -154,13 +199,16 @@ const opcionesFiltradas = ref([])
 const tasaActual = ref(0)
 const cargandoTasa = ref(false)
 
+// Variables para Animaciones
+const rotacionSwap = ref(0)
+const pulsoActivo = ref(false)
+
 const formulario = reactive({
-  cantidad: 1, // Por defecto iniciamos en 1
+  cantidad: 1,
   monedaTengo: 'EUR',
   monedaQuiero: 'USD',
 })
 
-// Lista fija de conversiones populares
 const conversionesPopulares = [
   { base: 'EUR', destino: 'USD' },
   { base: 'EUR', destino: 'CHF' },
@@ -174,12 +222,10 @@ const conversionesPopulares = [
   { base: 'EUR', destino: 'SEK' },
 ]
 
-// Volver atrás en breadcrumbs
 const volverAtras = () => {
   router.back()
 }
 
-// Búsqueda en los q-select
 const filtrarMonedas = (val, update) => {
   if (val === '') {
     update(() => {
@@ -197,10 +243,8 @@ const filtrarMonedas = (val, update) => {
   })
 }
 
-// Para que el título grande diga "1 Euro a USD" en lugar de "1 EUR a USD"
 const nombreMonedaBase = computed(() => {
   const moneda = opcionesMonedas.value.find((m) => m.value === formulario.monedaTengo)
-  // Asumiendo que tu label es "EUR - Euro", extraemos la palabra "Euro". Ajusta según tus datos.
   if (moneda) {
     const partes = moneda.label.split('-')
     return partes.length > 1 ? partes[1].trim() : moneda.value
@@ -208,14 +252,23 @@ const nombreMonedaBase = computed(() => {
   return formulario.monedaTengo
 })
 
-// Cálculo en tiempo real (formateado a 4 decimales como OANDA)
+// 1. El cálculo de la caja gris derecha
 const cantidadConvertida = computed(() => {
   if (formulario.cantidad === null || formulario.cantidad === '') return ''
   const total = formulario.cantidad * tasaActual.value
-  return total > 0 ? total.toFixed(4).replace('.', ',') : '0,0000'
+  return total > 0 ? total.toFixed(4) : '0.0000'
 })
 
-// Consumir tu API
+// 2. La tasa unitaria que aparece debajo
+const tasaActualFormateada = computed(() => {
+  return tasaActual.value ? tasaActual.value.toFixed(5) : '0.00000'
+})
+
+// 3. La tasa inversa
+const tasaInversaFormateada = computed(() => {
+  return tasaActual.value ? (1 / tasaActual.value).toFixed(5) : '0.00000'
+})
+
 const obtenerTasaDesdeApi = async () => {
   if (!formulario.monedaTengo || !formulario.monedaQuiero) return
 
@@ -238,42 +291,50 @@ const obtenerTasaDesdeApi = async () => {
   }
 }
 
-// Botón de invertir divisas
+// Invertir monedas con incremento de rotación
 const invertirMonedas = () => {
+  rotacionSwap.value += 180 // Suma 180 grados para que siempre gire fluido
   const temporal = formulario.monedaTengo
   formulario.monedaTengo = formulario.monedaQuiero
   formulario.monedaQuiero = temporal
-  // El watch se encargará de disparar obtenerTasaDesdeApi()
 }
 
-// Clic en tarjetas populares (La magia del scroll y el reseteo)
 const aplicarConversionPopular = (base, destino) => {
-  // 1. Efecto visual suave hacia el inicio de la página
   window.scrollTo({ top: 0, behavior: 'smooth' })
-
-  // 2. Setear valores
   formulario.cantidad = 1
   formulario.monedaTengo = base
   formulario.monedaQuiero = destino
-
-  // No necesitamos llamar a la API manualmente aquí,
-  // porque el 'watch' detectará el cambio y lo hará por nosotros.
 }
 
-// Reaccionar a cualquier cambio de moneda
-watch([() => formulario.monedaTengo, () => formulario.monedaQuiero], () => {
-  obtenerTasaDesdeApi()
+// Escuchar cambios para hacer la llamada y activar el pulso visual
+const activarPulso = () => {
+  pulsoActivo.value = true
+  setTimeout(() => {
+    pulsoActivo.value = false
+  }, 400)
+}
+
+// 1. VIGILANTE DE MONEDAS: Este SÍ llama a la API porque la tasa cambia
+watch([() => formulario.monedaTengo, () => formulario.monedaQuiero], async () => {
+  await obtenerTasaDesdeApi()
+  activarPulso()
 })
 
-// Inicialización
+// 2. VIGILANTE DE CANTIDAD: Este NO llama a la API, solo calcula localmente y anima
+watch(
+  () => formulario.cantidad,
+  () => {
+    // Solo se activa la animación, Vue ya calcula el total matemáticamente en el 'computed'
+    activarPulso()
+  },
+)
+
 onMounted(async () => {
-  // 1. Configurar Migas de Pan
   breadcrumbStore.setHistorial([
     { label: 'Inicio', to: '/' },
     { label: 'Tipo de Cambio', to: '/tipo-cambio' },
   ])
 
-  // 2. Obtener lista de monedas y tasa inicial
   try {
     const monedas = await uniRateService.obtenerMonedasDisponibles()
     opcionesMonedas.value = monedas
@@ -286,7 +347,45 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* Ocultar las flechas nativas del input numérico */
+/* 1. Animación de Cascada (Fade Up) */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  opacity: 0; /* Inicia oculto */
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* 2. Animación de Pulso para el Input de Resultado */
+@keyframes flashPulse {
+  0% {
+    transform: scale(1);
+    color: #424242;
+  }
+  50% {
+    transform: scale(1.02);
+    color: #a87b5d;
+  }
+  100% {
+    transform: scale(1);
+    color: #424242;
+  }
+}
+
+.animacion-pulso :deep(input) {
+  animation: flashPulse 0.4s ease-out;
+  color: #a87b5d !important; /* Brillo momentáneo */
+}
+
+/* Ocultar flechas nativas */
 .input-sin-flechas :deep(input[type='number']::-webkit-outer-spin-button),
 .input-sin-flechas :deep(input[type='number']::-webkit-inner-spin-button) {
   -webkit-appearance: none;
@@ -296,18 +395,25 @@ onMounted(async () => {
   -moz-appearance: textfield;
 }
 
-/* Eliminar el underline base de los inputs "filled" de Quasar para que parezcan cajas planas */
+/* Inputs Planos */
 :deep(.q-field--filled .q-field__control::before) {
   border-bottom: none !important;
 }
 
-/* Efecto hover suave para las tarjetas de conversiones populares */
+/* Efecto hover interactivo para las tarjetas */
 .hover-card {
-  transition: all 0.2s ease-in-out;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 .hover-card:hover {
   border-color: #a87b5d !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(168, 123, 93, 0.15);
+  transform: translateY(-3px);
+}
+.hover-card .flecha-icono {
+  transition: transform 0.3s ease;
+}
+.hover-card:hover .flecha-icono {
+  transform: translateX(5px);
+  color: #a87b5d !important;
 }
 </style>
