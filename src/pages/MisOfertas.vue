@@ -3,7 +3,7 @@
     <div class="row justify-start q-mb-lg">
       <q-breadcrumbs active-color="dark" class="text-grey-7">
         <q-breadcrumbs-el
-          label="Volver | "
+          label="Volver"
           class="cursor-pointer text-weight-bold"
           @click="volverAtras"
         />
