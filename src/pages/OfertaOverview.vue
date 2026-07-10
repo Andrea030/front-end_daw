@@ -95,7 +95,6 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
-// 1. IMPORTANTE: Importamos 'api' para que use tus interceptores con el Bearer token
 import { api } from 'src/boot/axios' 
 
 const $q = useQuasar()
@@ -138,35 +137,13 @@ const calcularMontoAEntregar = computed(() => {
   return total.toFixed(2)
 })
 
-// --- PETICIÓN PARA CONFIRMAR TRANSACCIÓN (PATCH) ---
-const confirmarTransaccion = async () => {
-  if (!oferta.value) return
-
-  try {
-    // Activamos el estado de carga del botón de la interfaz
-    procesandoTransaccion.value = true
-
-    // Ejecutamos el PATCH hacia tu nuevo endpoint enviando el DTO esperado
-    await api.patch(`/ofertas/${oferta.value.id}/estado`, {
-      estado: false // Cambiamos el estado a false para desactivarla/retirarla del mercado
-    })
+const confirmarTransaccion = () => {
+    if (!oferta.value) return
 
     router.push({
         path: '/formalizar-transaccion',
         query: { id: oferta.value.id }
     })
-
-  } catch (error) {
-    console.error(error)    
-    $q.notify({
-      type: 'negative',
-      message: mensajeError,
-      position: 'top'
-    })
-  } finally {
-    // Apagamos la animación de carga del botón
-    procesandoTransaccion.value = false
-  }
 }
 
 onMounted(() => {
