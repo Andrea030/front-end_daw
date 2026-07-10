@@ -22,7 +22,10 @@ const routes = [
       { path: 'mis-ofertas', component: () => import('pages/MisOfertas.vue') },
       { path: 'formalizar-transaccion', component: () => import('pages/FormalizarTransaccionPage.vue') },
       { path: 'tipo-cambio', component: () => import('pages/TipoCambio.vue') },
+      { path: 'mi-perfil', component: () => import('pages/PerfilPage.vue') },
+      { path: 'billetera', component: () => import('pages/BilleteraPage.vue') },
       { path: 'historial-operaciones', component: () => import('pages/HistorialOperacionesPage.vue') },
+      { path: 'configuracion', component: () => import('pages/ConfiguracionPage.vue') },
     ],
   },
 
