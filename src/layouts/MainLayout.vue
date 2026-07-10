@@ -7,7 +7,7 @@
         </div>
         <q-space />
         <q-btn flat label="tipo de cambio" to="/tipo-cambio" class="nav-btn" no-caps />
-        <q-btn flat label="mis ofertas" to="/ofertas" class="nav-btn" no-caps />
+        <q-btn flat label="mis ofertas" to="/mis-ofertas" class="nav-btn" no-caps />
         <q-btn flat round class="q-ml-sm">
           <q-avatar color="primary" text-color="white" size="lg" class="text-uppercase">
             {{ usuario.nombreUsuario?.charAt(0) }}
