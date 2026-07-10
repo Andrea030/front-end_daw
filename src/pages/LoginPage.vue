@@ -101,18 +101,20 @@ const iniciarSesion = async () => {
   cargando.value = true
 
   try {
-    // 2. Realizamos la petición POST a la API (Igual que en Postman)
+    // 2. Realizamos la petición POST a la API
     const response = await axios.post(`${baseUrl}/api/auth/login`, {
       email: correo.value,
       password: contrasena.value
     })
 
-    // 3. Extraemos el token de la respuesta
+    // 3. Extraemos las propiedades de la respuesta
     const token = response.data.token
+    const clienteId = response.data.clienteId // <-- Capturamos el ID del DTO
 
     if (token) {
-      // 4. Guardamos el token en el almacenamiento del navegador
+      // 4. Guardamos ambos valores de manera persistente en el navegador
       localStorage.setItem('token', token)
+      localStorage.setItem('userId', clienteId) // <-- ¡FIX PINPOINT! Aquí salvamos el ID
 
       $q.notify({
         type: 'positive',
@@ -120,7 +122,7 @@ const iniciarSesion = async () => {
         position: 'top'
       })
 
-      // 5. Redirigimos a la página de inicio (ajusta la ruta según tu proyecto)
+      // 5. Redirigimos a la página de inicio
       router.push('/')
     } else {
       throw new Error('No se recibió el token de la API')

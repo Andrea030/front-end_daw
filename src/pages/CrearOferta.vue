@@ -335,7 +335,7 @@ const prepararPublicacion = async () => {
         persistent: false
       }).onOk(() => {
         publicando.value = false // Liberamos el botón si sale de la pantalla
-        router.push(`/ofertas/${match.id}`)
+        router.push(`/ofertaOverview/${match.id}`)
       }).onCancel(() => {
         // Redirecciona directamente al diálogo de confirmación (Resumen ordenado)
         abrirDialogoConfirmacionResumen()
