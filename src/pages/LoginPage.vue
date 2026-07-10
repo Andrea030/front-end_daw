@@ -35,13 +35,21 @@
                   <label class="form-label q-mb-sm">Ingresar contraseña:</label>
                   <q-input
                     v-model="contrasena"
-                    type="password"
+                    :type="mostrarContrasena ? 'text' : 'password'"
                     outlined
                     dense
                     placeholder="● ● ● ● ● ● ● ●"
                     class="custom-input"
                     hide-bottom-space
-                  />
+                  >
+                    <template #append>
+                      <q-icon
+                        :name="mostrarContrasena ? 'visibility_off' : 'visibility'"
+                        class="cursor-pointer"
+                        @click="mostrarContrasena = !mostrarContrasena"
+                      />
+                    </template>
+                  </q-input>
                 </div>
     
                 <q-btn
@@ -82,6 +90,8 @@ const $q = useQuasar()
 const correo = ref('')
 const contrasena = ref('')
 const cargando = ref(false) // Para mostrar la animación de carga en el botón
+
+const mostrarContrasena = ref(false)
 
 // URL de tu API (ajusta el puerto si es diferente)
 const baseUrl = 'http://localhost:5000'
