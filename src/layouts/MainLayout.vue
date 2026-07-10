@@ -45,7 +45,7 @@
                 </q-item-section>
                 <q-item-section class="text-grey-9">Billetera Digital</q-item-section>
               </q-item>
-              <q-item clickable v-close-popup to="/historial" class="menu-item">
+              <q-item clickable v-close-popup to="/historial-operaciones" class="menu-item">
                 <q-item-section avatar class="min-w-0 q-pr-sm">
                   <q-icon name="history" color="grey-8" size="sm" />
                 </q-item-section>

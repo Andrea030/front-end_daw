@@ -22,6 +22,7 @@ const routes = [
       { path: 'mis-ofertas', component: () => import('pages/MisOfertas.vue') },
       { path: 'formalizar-transaccion', component: () => import('pages/FormalizarTransaccionPage.vue') },
       { path: 'tipo-cambio', component: () => import('pages/TipoCambio.vue') },
+      { path: 'historial-operaciones', component: () => import('pages/HistorialOperacionesPage.vue') },
     ],
   },
 
