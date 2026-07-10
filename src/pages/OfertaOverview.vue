@@ -74,7 +74,11 @@
           <q-btn label="Regresar" flat color="grey-7" class="full-width text-weight-bold" @click="router.back()" />
         </div>
         <div class="col-12 col-sm-6">
-          <q-btn label="Confirmar Intercambio" unelevated color="primary" class="full-width text-weight-bold" :disable="!oferta.estado" @click="confirmarTransaccion" />
+          <q-btn label="Confirmar Intercambio" unelevated color="primary" class="full-width text-weight-bold" 
+            :disable="!oferta.estado"
+            :loading="procesandoTransaccion"
+            @click="confirmarTransaccion" 
+            />
         </div>
       </div>
     </q-card>
@@ -90,20 +94,21 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import axios from 'axios'
 import { useQuasar } from 'quasar'
+import { api } from 'src/boot/axios' 
 
 const $q = useQuasar()
 const route = useRoute()
 const router = useRouter()
-const baseUrl = 'http://localhost:5000'
+
+// Nota: Ya no necesitas concatenar 'baseUrl' manualmente, 'api' ya tiene configurada tu URL base.
 
 const loading = ref(true)
+const procesandoTransaccion = ref(false) // Nuevo estado para controlar la animación del botón
 const oferta = ref(null)
 
-// --- OBTENER DETALLE POR ID (Como tu petición de Postman) ---
+// --- OBTENER DETALLE POR ID ---
 const fetchOfertaDetalle = async () => {
-  // Extraemos el 'id' de la URL (?id=...)
   const offerId = route.query.id
 
   if (!offerId) {
@@ -114,8 +119,8 @@ const fetchOfertaDetalle = async () => {
 
   try {
     loading.value = true
-    // Hacemos el GET idéntico al endpoint mapeado en tu Postman: /api/ofertas/{id}
-    const response = await axios.get(`${baseUrl}/api/ofertas/${offerId}`)
+    // Cambiado de 'axios.get' a 'api.get' para usar la configuración global
+    const response = await api.get(`/ofertas/${offerId}`)
     oferta.value = response.data
   } catch (error) {
     console.error('Error al consultar el detalle de la oferta:', error)
@@ -128,18 +133,17 @@ const fetchOfertaDetalle = async () => {
 // --- PROPIEDAD COMPUTADA PARA OPERACIÓN MATEMÁTICA ---
 const calcularMontoAEntregar = computed(() => {
   if (!oferta.value) return 0
-  // Multiplicamos la cantidad que ofrece por su tasa de cambio asignada
   const total = Number(oferta.value.cantidad) * Number(oferta.value.tipoCambio)
   return total.toFixed(2)
 })
 
 const confirmarTransaccion = () => {
-  $q.notify({
-    type: 'positive',
-    message: `¡Solicitud de intercambio enviada con éxito a ${oferta.value.nombreUsuario}!`,
-    position: 'top'
-  })
-  router.push('/')
+    if (!oferta.value) return
+
+    router.push({
+        path: '/formalizar-transaccion',
+        query: { id: oferta.value.id }
+    })
 }
 
 onMounted(() => {

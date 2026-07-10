@@ -166,7 +166,7 @@
           <div v-else class="row q-col-gutter-md">
             <div v-for="offer in filteredOffers" :key="offer.id" class="col-12 col-sm-6 col-md-4">
               <q-card flat bordered class="offer-card column justify-between full-height">
-                <q-card-section class="q-pa-md column q-gutter-y-xs">
+                <q-card-section class="q-pa-md column q-gutter-y-xs col" style="display: flex; flex-wrap: wrap; justify-content: space-evenly;">
                   <div class="text-subtitle1 text-weight-bold text-grey-9">
                     Oferta por: {{ offer.nombreUsuario }}
                   </div>
@@ -189,10 +189,6 @@
                     </span>
                   </div>
                 </q-card-section>
-
-                <div class="offer-timestamp text-grey-6 text-uppercase">
-                  Estado: {{ offer.estado ? 'Activo' : 'Inactivo' }}
-                </div>
 
                 <q-btn
                   label="Intercambiar"
