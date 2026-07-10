@@ -9,16 +9,16 @@
         <q-space />
 
         <q-btn flat label="tipo de cambio" to="/tipo-cambio" class="nav-btn" no-caps />
-        <q-btn flat label="mis ofertas" to="/ofertas" class="nav-btn" no-caps />
+        <q-btn flat label="mis ofertas" to="/mis-ofertas" class="nav-btn" no-caps />
 
-        <q-btn 
-          v-if="!isLoggedIn" 
-          flat 
-          round 
-          icon="account_circle" 
-          size="lg" 
-          class="q-ml-sm" 
-          to="/login" 
+        <q-btn
+          v-if="!isLoggedIn"
+          flat
+          round
+          icon="account_circle"
+          size="lg"
+          class="q-ml-sm"
+          to="/login"
         />
 
         <q-btn v-else flat round class="q-ml-sm">
@@ -26,16 +26,15 @@
             <img src="https://cdn.quasar.dev/img/avatar.png" />
           </q-avatar>
 
-          <q-menu 
-            transition-show="jump-down" 
+          <q-menu
+            transition-show="jump-down"
             transition-hide="jump-up"
-            anchor="bottom right" 
+            anchor="bottom right"
             self="top right"
             :offset="[0, 10]"
             class="profile-menu"
           >
             <q-list style="min-width: 260px" class="q-py-sm">
-              
               <q-item class="q-pb-md">
                 <q-item-section avatar>
                   <q-avatar size="48px">
@@ -86,11 +85,9 @@
                 </q-item-section>
                 <q-item-section class="text-grey-9">Cerrar Sesión</q-item-section>
               </q-item>
-
             </q-list>
           </q-menu>
         </q-btn>
-
       </q-toolbar>
     </q-header>
 
@@ -124,7 +121,6 @@ const cerrarSesion = () => {
     window.location.reload() // Recarga la página para reflejar el cambio de estado
   })
 }
-
 </script>
 
 <style scoped>
@@ -167,5 +163,4 @@ const cerrarSesion = () => {
 .min-w-0 {
   min-width: 0 !important;
 }
-
 </style>
