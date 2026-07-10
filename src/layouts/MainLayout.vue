@@ -185,5 +185,4 @@ const cerrarSesion = () => {
 .min-w-0 {
   min-width: 0 !important;
 }
-
 </style>
