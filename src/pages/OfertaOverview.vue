@@ -150,23 +150,14 @@ const confirmarTransaccion = async () => {
     await api.patch(`/ofertas/${oferta.value.id}/estado`, {
       estado: false // Cambiamos el estado a false para desactivarla/retirarla del mercado
     })
-    
-    // Si .NET responde con 200 OK, lanzamos el flujo de éxito
-    $q.notify({
-      type: 'positive',
-      message: `¡Solicitud enviada con éxito! La oferta de ${oferta.value.nombreUsuario} ha sido tomada.`,
-      position: 'top'
+
+    router.push({
+        path: '/formalizar-transaccion',
+        query: { id: oferta.value.id }
     })
 
-    // Redirigimos al Home de forma limpia
-    router.push('/')
-
   } catch (error) {
-    console.error('Error al procesar la transacción:', error)
-    
-    // Leemos el mensaje personalizado en español que retorna tu backend en caso de falla
-    const mensajeError = error.response?.data?.mensaje || 'No se pudo procesar la transacción. Inténtalo de nuevo.'
-    
+    console.error(error)    
     $q.notify({
       type: 'negative',
       message: mensajeError,
